@@ -1,47 +1,70 @@
-from os import environ
+import os
 from ftplib import FTP, FTP_TLS
 import logging
 
-HOST_URL = environ.get('HOST_URL', 'ftp.client.com')
-USERNAME = environ.get('USERNAME', 'ftp@client.com')
-PASSWORD = environ.get('PASSWORD', 'aStrongPassword')
-WORKDIR = environ.get('WORKDIR', './')
-HOMEDIR = environ.get('HOMEDIR', './')
+HOST_URL = os.environ.get('HOST_URL', 'localhost')
+USERNAME = os.environ.get('USERNAME', 'bob')
+PASSWORD = os.environ.get('PASSWORD', 'secret')
+WORKDIR = os.environ.get('WORKDIR', 'ohh/look/this')
+SOURCEDIR = os.environ.get('SOURCEDIR', './test/sourcedir')
 
 
 # Set logger
-FORMAT = '%(asctime)-15s %(clientip)s %(user)-8s %(message)s'
+FORMAT = '[%(asctime)-15s]  %(message)s'
 logging.basicConfig(format=FORMAT)
-d = {'clientip': '192.168.0.1', 'user': 'fbloggs'}
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+
 def upload_ftp ():
-    print(HOST_URL, USERNAME, PASSWORD)
-    # logging.info('Connecting')
+    # FTP Connect
+    logger.info('Connecting')
     ftp = FTP_TLS(HOST_URL)
 
-    # logging.debug('{0}, {1}'.format(USERNAME, PASSWORD))
     ftp.login(USERNAME, PASSWORD)
-    # ftp.prot_p()
+    ftp.prot_p()
 
+    # Validate connection
     ftp.retrlines('LIST')
     
+    logger.info('Connected')
     files = ftp.nlst()
 
+    # Go to WORKDIR to start the uploading.
+    directory_tree = WORKDIR.split('/')
+    for directory in directory_tree:
+        files = ftp.nlst()
+        print(files)
+        if not directory in files:
+            ftp.mkd(directory)
+        ftp.cwd(directory)
 
-    print ('content_web in? {is_it}'.format(is_it='content_web' in files))
+    # Scan local direcotry
+    logger.info('scanning')
+    srcdir_length = len(SOURCEDIR) 
+    for root, dirs, files in os.walk(SOURCEDIR, topdown=True):
+        logger.info('ROOT: {}'.format(root))
+        cwd = root[srcdir_length:]
+        workdir ='/{}{}'.format(WORKDIR, cwd)
+        ftp.cwd(workdir)
+        logger.debug('remote pwd: {}'.format(ftp.pwd()))
 
+        for file_name in files:
+            file_path = os.path.join(root, file_name)
+            logger.info('FILE: {}, PATH: {}'.format(file_name, file_path))
+            store_cmd = 'STOR ./{}'.format(file_name)
+            with open(file_path, 'rb') as f:
+                print(store_cmd)
+                ftp.storbinary(store_cmd, f)
 
-    ftp.cwd('content_web')
-    dir_list = ftp.nlst()
-    print(dir_list)
+        for dir_name in dirs:
+            file_path = os.path.join(root, dir_name)
+            logger.info('DIR: {}, PATH: {}'.format(dir_name, file_path))
+            files = ftp.nlst()
+	    if not dir_name in files:
+                ftp.mkd(dir_name)
 
-    files = ftp.nlst()
-    for f in files:
-        print(f)
-
-    # on exit
+    logger.info('Finished updload.')
     ftp.quit()
 
 
