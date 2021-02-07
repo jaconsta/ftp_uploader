@@ -2,7 +2,7 @@
 
 Designed to upload a complete folder to a remote FTP destination.
 
-Coded fot FTPS but with 2 small changes works with FTP too.
+Coded for FTPS but with 2 small changes works with FTP too.
 
 ## INSTRUCTIONS
 
@@ -11,11 +11,11 @@ That might affect your results.
 
 ## TEST BEFORE UPLOAD TO PRODUCTION
 
-The test folder comes with two componens.
+The test folder comes with two components.
 
 The `README` which contains quick instructions to create a test FTP server.
 
-A folder `sourcedir` which contains the files to match default environment variable `SOURCEDIR`, 
+A folder `sourcedir` which contains the files to match default environment variable `SOURCEDIR`,
 and that are going to be uploaded by default.
 
 The env var `USERNAME` by default contains the OS username, so be sure to set it before running the program.
